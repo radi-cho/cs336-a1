@@ -2,46 +2,30 @@ import pickle
 import regex as re
 import multiprocessing
 from tqdm import tqdm
-from collections import defaultdict, Counter
-from typing import List, Tuple, Iterable, Dict
+from collections import defaultdict
+from typing import List, Tuple, Dict, Iterable
 
-from cs336_basics.utils import read_text_lines
-from cs336_basics.common import pretokenize_text
-from cs336_basics.constants import CHARACTER_ACCUMULATION
+from cs336_basics.constants import PAT
 
 
-def pretokenize_chunk(args) -> List[Tuple[bytes]]:
-    text_chunk, naive = args
-    return pretokenize_text(text_chunk, naive)
+def read_text_lines(file_path: str, special_tokens: List[str]) -> Iterable[bytes]:
+    with open(file_path, "r") as file:
+        for line in file:
+            yield (line, special_tokens)
 
 
-def pretokenize(
-    text_lines: Iterable[str],
-    naive: bool = False,
-    num_chunks: int = 4,
-    special_tokens: List[str] = []
-) -> Iterable[Tuple[bytes]]:
-    escaped_special_tokens = [re.escape(token) for token in special_tokens]
-    pattern = '|'.join(escaped_special_tokens)
+def pretokenize(arguments: Tuple[str, List[str]]) -> Dict[bytes, int]:
+    text_line, token_exceptions = arguments
+    split_regex = "|".join(re.escape(token) for token in token_exceptions)
+    segments = re.split(split_regex, text_line)
 
-    def process_lines():
-        current_text = ""
-        for line in text_lines:
-            current_text += line
-            if len(current_text) > CHARACTER_ACCUMULATION:
-                segments = re.split(pattern, current_text)
-                yield segments
-                current_text = ""
-        if current_text:
-            segments = re.split(pattern, current_text)
-            yield segments
+    frequency_map: Dict[bytes, int] = {}
+    for segment in segments:
+        for found in re.finditer(PAT, segment):
+            word = found.group().encode("utf-8")
+            frequency_map[word] = frequency_map.get(word, 0) + 1
 
-    args_gen = ((doc, naive) for chunk in process_lines() for doc in chunk)
-
-    with multiprocessing.Pool(num_chunks) as pool:
-        imap_obj = pool.imap_unordered(pretokenize_chunk, args_gen)
-        for token_list in tqdm(imap_obj):
-            yield from token_list
+    return frequency_map
 
 
 def get_index(
@@ -135,9 +119,14 @@ def train_bpe(
         vocab[len(vocab)] = bytes([b])
     vocab.update({(256 + i): item.encode() for i, item in enumerate(special_tokens)})
 
-    text_lines = read_text_lines(input_path)
-    pretokenized_sequence = pretokenize(text_lines, special_tokens=special_tokens)
-    frequency_table = dict(Counter(pretokenized_sequence))
+    text_lines = read_text_lines(input_path, special_tokens)
+    frequency_table = defaultdict(int)
+
+    with multiprocessing.Pool(4) as pool:
+        for result in pool.imap_unordered(pretokenize, text_lines):
+            for token, count in result.items():
+                frequency_table[tuple(bytes([b]) for b in token)] += count
+
     print("Building index")
     pair_frequencies, pair_sequences = get_index(frequency_table)
     print("Training")
@@ -173,8 +162,9 @@ def save_tokenizer(
 
 if __name__ == "__main__":
     # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train-small.txt", 10000, ["<|endoftext|>"])
-    vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train.txt", 10000, ["<|endoftext|>"])
+    vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-valid.txt", 10000, ["<|endoftext|>"])
+    # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train.txt", 10000, ["<|endoftext|>"])
     # vocab, merges = train_bpe("../data/owt_train.txt", 32000, ["<|endoftext|>"])
+    # vocab, merges = train_bpe("./fixtures/sample2.txt", 257 + 8, ["<|endoftext|>"])
     save_tokenizer(vocab, merges, "tokenizer")
-    # vocab, merges = train_bpe("./fixtures/sample1.txt", 257 + 8, ["<|endoftext|>"])
     # print(merges)
