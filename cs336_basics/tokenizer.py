@@ -1,4 +1,6 @@
+import time
 import pickle
+from tqdm import tqdm
 from typing import Dict, List, Tuple, Optional, Iterable, Iterator
 
 from cs336_basics.constants import PAT
@@ -15,13 +17,10 @@ def pretokenize_text(
     return [tuple(bytes([b]) for b in token.encode()) for token in token_list]
 
 
-def merge(
-    sequence: Tuple[bytes],
-    pair: Tuple[bytes]
-) -> Tuple[bytes]:
+def merge(sequence: Tuple[bytes], pair: Tuple[bytes]) -> Tuple[bytes]:
     merged, i = [], 0
     while i < len(sequence):
-        if i < len(sequence) - 1 and sequence[i:i+2] == pair:
+        if i < len(sequence) - 1 and sequence[i] == pair[0] and sequence[i+1] == pair[1]:
             merged.append(pair[0] + pair[1])
             i += 2
         else:
@@ -29,6 +28,10 @@ def merge(
             i += 1
 
     return tuple(merged)
+
+
+def get_pairs(sequence: Tuple[bytes]) -> set:
+    return set((sequence[i], sequence[i+1]) for i in range(len(sequence) - 1))
 
 
 class Tokenizer:
@@ -43,9 +46,8 @@ class Tokenizer:
 
         self.merges = merges
         self.special_tokens = special_tokens or []
-        # TODO: Is this the right idea?
         self.special_tokens.sort(key=lambda token: (-len(token), token), reverse=False)
-        self.special_token_bytes = [tok.encode("utf-8") for tok in self.special_tokens]
+        self.merge_ranks = {pair: i for i, pair in enumerate(merges)}
 
     @classmethod
     def from_files(
@@ -62,28 +64,39 @@ class Tokenizer:
 
         return Tokenizer(vocab, merges, special_tokens)
 
-    def encode_helper(self, text: str):
+    def encode_helper(self, text: str) -> List[int]:
         result = []
         pretokenized = pretokenize_text(text)
 
         for pretoken in pretokenized:
-            for pair in self.merges: # TODO: Might be too slow
-                pretoken = merge(pretoken, pair)
+            pairs = get_pairs(pretoken)
+            if pairs:
+                while True:
+                    min_rank = float('inf')
+                    best_pair = None
+                    for pair in pairs:
+                        rank = self.merge_ranks.get(pair)
+                        if rank is not None and rank < min_rank:
+                            min_rank = rank
+                            best_pair = pair
+
+                    if best_pair is None:
+                        break
+
+                    pretoken = merge(pretoken, best_pair)
+                    pairs = get_pairs(pretoken)
 
             for item in pretoken:
                 result.append(self.reverse_lookup[item])
 
         return result
 
-    def encode(
-        self,
-        text: str
-    ) -> List[int]:
+    def encode(self, text: str) -> List[int]:
         result = []
         start_idx = 0
         for special_token in self.special_tokens:
             special_idx = text.find(special_token, start_idx)
-            
+
             while special_idx != -1:
                 before_special = text[start_idx:special_idx]
                 if before_special:
@@ -92,7 +105,7 @@ class Tokenizer:
                 result.append(self.reverse_lookup[special_token.encode()])
                 start_idx = special_idx + len(special_token)
                 special_idx = text.find(special_token, start_idx)
-        
+
         if start_idx < len(text):
             result.extend(self.encode_helper(text[start_idx:]))
 
@@ -104,6 +117,7 @@ class Tokenizer:
     ) -> Iterator[int]:
         for text in iterable:
             yield from self.encode(text)
+            # yield len(text.encode()), self.encode(text)
 
     def decode(
         self,
@@ -112,9 +126,37 @@ class Tokenizer:
         byte_sequence = b""
         for id in ids:
             byte_sequence += self.vocab[id]
-        
-        # TODO: FIX, Ask about what happens if this cannot be decoded?
+
         try:
             return byte_sequence.decode()
         except:
             return byte_sequence
+
+if __name__ == "__main__":
+    with open("tokenizer_vocab.pickle", "rb") as f:
+        vocab = pickle.load(f)
+
+    with open("tokenizer_merges.pickle", "rb") as f:
+        merges = pickle.load(f)
+
+    tokenizer = Tokenizer(vocab, merges, ["<|endoftext|>"])
+
+    total_lines = 20000
+    byte_sum = 0
+    token_count = 0
+    counter = 0
+
+    start = time.time()
+    # with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
+    with open("../data/owt_train.txt", "r") as f:
+        for byte_length, encoding in tqdm(tokenizer.encode_iterable(f), total=total_lines):
+            if counter >= total_lines:
+                break
+            byte_sum += byte_length
+            token_count += len(encoding)
+            counter += 1
+
+    end = time.time()
+    print(f"Time: {end - start:.4f}s")
+    print(f"Throughput: {byte_sum / (end - start):.4f}s")
+    print(f"Compression: {byte_sum / token_count:.4f}")
