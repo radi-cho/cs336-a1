@@ -8,6 +8,6 @@ def find_longest_tokens(path: str, top_n: int = 20) -> List[Tuple[int, bytes]]:
     return sorted_tokens[:top_n]
 
 if __name__ == "__main__":
-    longest_tokens = find_longest_tokens("../archive/open_tokenizer_vocab.pickle")
+    longest_tokens = find_longest_tokens("tokenizer_vocab.pickle")
     for tid, token in longest_tokens:
         print(f"id: {tid}, length: {len(token)}, token: {token}")
