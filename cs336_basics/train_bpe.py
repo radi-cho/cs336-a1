@@ -52,9 +52,9 @@ def apply_merges_update_index(
     pair_first, pair_second = pair
     merged_pair = pair_first + pair_second
 
-    for token_seq in pair_sequences[pair]:
+    for token_seq in list(pair_sequences[pair]):
         freq = frequency_table[token_seq]
-        if freq == 0:
+        if freq <= 0:
             continue
 
         i, new_seq = 0, []
@@ -62,27 +62,6 @@ def apply_merges_update_index(
         while i < len(token_seq):
             if i < len(token_seq) - 1 and token_seq[i] == pair_first and token_seq[i + 1] == pair_second:
                 new_seq.append(merged_pair)
-
-                if i > 0:
-                    prev_pair = (token_seq[i - 1], pair_first)
-                    new_prev_pair = (token_seq[i - 1], merged_pair)
-
-                    pair_frequencies[prev_pair] -= freq
-                    if pair_frequencies[prev_pair] <= 0:
-                        del pair_frequencies[prev_pair]
-
-                    pair_frequencies[new_prev_pair] += freq
-
-                if i + 2 < len(token_seq):
-                    next_pair = (pair_second, token_seq[i + 2])
-                    new_next_pair = (merged_pair, token_seq[i + 2])
-
-                    pair_frequencies[next_pair] -= freq
-                    if pair_frequencies[next_pair] <= 0:
-                        del pair_frequencies[next_pair]
-
-                    pair_frequencies[new_next_pair] += freq
-
                 i += 2
             else:
                 new_seq.append(token_seq[i])
@@ -91,11 +70,19 @@ def apply_merges_update_index(
         new_seq_tuple = tuple(new_seq)
         seen_pairs = set()
 
+        for i in range(len(token_seq) - 1):
+            old_pair = (token_seq[i], token_seq[i + 1])
+            pair_frequencies[old_pair] -= freq
+            if pair_frequencies[old_pair] <= 0:
+                del pair_frequencies[old_pair]
+
         for i in range(len(new_seq) - 1):
-            up = (new_seq[i], new_seq[i + 1])
-            if up not in seen_pairs:
-                pair_sequences[up].add(new_seq_tuple)
-                seen_pairs.add(up)
+            new_pair = (new_seq[i], new_seq[i + 1])
+            pair_frequencies[new_pair] += freq
+
+            if new_pair not in seen_pairs:
+                pair_sequences[new_pair].add(new_seq_tuple)
+                seen_pairs.add(new_pair)
 
         if new_seq_tuple in frequency_table:
             frequency_table[new_seq_tuple] += freq
@@ -119,6 +106,8 @@ def train_bpe(
         vocab[len(vocab)] = bytes([b])
     vocab.update({(256 + i): item.encode() for i, item in enumerate(special_tokens)})
 
+    # with open("wip.pickle", "rb") as f:
+    #     frequency_table, pair_frequencies, pair_sequences = pickle.load(f)
     text_lines = read_text_lines(input_path, special_tokens)
     frequency_table = defaultdict(int)
 
@@ -129,6 +118,7 @@ def train_bpe(
 
     print("Building index")
     pair_frequencies, pair_sequences = get_index(frequency_table)
+    # pickle.dump((frequency_table, pair_frequencies, pair_sequences), open("wip.pickle", "wb"))
     print("Training")
 
     progress = tqdm(total=vocab_size - len(vocab))
@@ -162,9 +152,9 @@ def save_tokenizer(
 
 if __name__ == "__main__":
     # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train-small.txt", 10000, ["<|endoftext|>"])
-    vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-valid.txt", 10000, ["<|endoftext|>"])
+    # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-valid.txt", 10000, ["<|endoftext|>"])
     # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train.txt", 10000, ["<|endoftext|>"])
-    # vocab, merges = train_bpe("../data/owt_train.txt", 32000, ["<|endoftext|>"])
+    vocab, merges = train_bpe("../data/owt_train.txt", 32000, ["<|endoftext|>"])
     # vocab, merges = train_bpe("./fixtures/sample2.txt", 257 + 8, ["<|endoftext|>"])
     save_tokenizer(vocab, merges, "tokenizer")
     # print(merges)
