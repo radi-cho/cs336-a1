@@ -18,6 +18,7 @@ from cs336_basics.swiglu import SiLU, SwiGLU
 from cs336_basics.rope import RoPE
 from cs336_basics.softmax import softmax
 from cs336_basics.scaled_dot_product_attention import scaled_dot_product_attention
+from cs336_basics.multihead_attention import MultiHeadSelfAttention
 
 
 def run_linear(
@@ -119,7 +120,7 @@ def run_scaled_dot_product_attention(
     Returns:
         Float[Tensor, " ... queries d_v"]: Output of SDPA
     """
-    return scaled_dot_product_attention(K, Q, V, mask)
+    return scaled_dot_product_attention(Q, K, V, mask)
 
 
 def run_multihead_self_attention(
@@ -153,7 +154,12 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mhsa = MultiHeadSelfAttention(d_model, num_heads)
+    mhsa.linear_q.weight.data = q_proj_weight
+    mhsa.linear_k.weight.data = k_proj_weight
+    mhsa.linear_v.weight.data = v_proj_weight
+    mhsa.linear_o.weight.data = o_proj_weight
+    return mhsa(in_features)
 
 
 def run_multihead_self_attention_with_rope(
@@ -193,7 +199,12 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mhsa = MultiHeadSelfAttention(d_model, num_heads, use_rope=True, theta=theta, max_seq_len=max_seq_len)
+    mhsa.linear_q.weight.data = q_proj_weight
+    mhsa.linear_k.weight.data = k_proj_weight
+    mhsa.linear_v.weight.data = v_proj_weight
+    mhsa.linear_o.weight.data = o_proj_weight
+    return mhsa(in_features, token_positions=token_positions)
 
 
 def run_rope(

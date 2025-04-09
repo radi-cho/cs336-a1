@@ -3,8 +3,8 @@ from cs336_basics.softmax import softmax
 
 
 def scaled_dot_product_attention(
-    K: torch.Tensor,
     Q: torch.Tensor,
+    K: torch.Tensor,
     V: torch.Tensor,
     mask: torch.Tensor = None
 ) -> torch.Tensor:
