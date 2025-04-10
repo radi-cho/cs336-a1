@@ -11,11 +11,11 @@ class MultiHeadSelfAttention(nn.Module):
         self,
         d_model: torch.Tensor,
         num_heads: torch.Tensor,
-        device: str | None = None,
-        dtype: torch.dtype | None = None,
         use_rope: bool = False,
         theta: float | None = None,
-        max_seq_len: int | None = None
+        max_seq_len: int | None = None,
+        device: str | None = None,
+        dtype: torch.dtype | None = None
     ):
         super().__init__()
         kwargs = {"device": device, "dtype": dtype}
@@ -28,10 +28,10 @@ class MultiHeadSelfAttention(nn.Module):
         if self.use_rope:
             self.rope = RoPE(theta, self.d_k, max_seq_len, device)
 
-        self.linear_q = Linear(self.d_k * num_heads, d_model, **kwargs)
-        self.linear_k = Linear(self.d_k * num_heads, d_model, **kwargs)
-        self.linear_v = Linear(self.d_v * num_heads, d_model, **kwargs)
-        self.linear_o = Linear(d_model, self.d_v * num_heads, **kwargs)
+        self.q_proj = Linear(self.d_k * num_heads, d_model, **kwargs)
+        self.k_proj = Linear(self.d_k * num_heads, d_model, **kwargs)
+        self.v_proj = Linear(self.d_v * num_heads, d_model, **kwargs)
+        self.output_proj = Linear(d_model, self.d_v * num_heads, **kwargs)
 
     def combine_head_dim(self, x: torch.Tensor):
         batch_size, seq_len, dim = x.shape
@@ -49,16 +49,16 @@ class MultiHeadSelfAttention(nn.Module):
         return x.reshape(batch_size, seq_len, i_dim * self.num_heads)
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor = None) -> torch.Tensor:
-        Q = self.combine_head_dim(self.linear_q(x))
-        K = self.combine_head_dim(self.linear_k(x))
+        Q = self.combine_head_dim(self.q_proj(x))
+        K = self.combine_head_dim(self.k_proj(x))
         if self.use_rope:
             Q = self.rope(Q, token_positions)
             K = self.rope(K, token_positions)
-        V = self.combine_head_dim(self.linear_v(x))
+        V = self.combine_head_dim(self.v_proj(x))
 
         mask = torch.triu(torch.ones(x.size(1), x.size(1), device=x.device), diagonal=1) == 0
         x = scaled_dot_product_attention(Q, K, V, mask)
         x = self.concat_heads(x)
 
-        x = self.linear_o(x)
+        x = self.output_proj(x)
         return x

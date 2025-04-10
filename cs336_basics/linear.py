@@ -12,7 +12,7 @@ class Linear(nn.Module):
         super().__init__()
         kwargs = {'device': device, 'dtype': dtype}
 
-        self.weight: nn.Parameter = nn.Parameter(torch.empty(in_features, out_features, **kwargs))
+        self.weight: nn.Parameter = nn.Parameter(torch.empty(out_features, in_features, **kwargs))
         std = 2 / (in_features + out_features)
         torch.nn.init.trunc_normal_(self.weight, 0, std, -3 * std, 3 * std)
 

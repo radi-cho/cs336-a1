@@ -19,6 +19,7 @@ from cs336_basics.rope import RoPE
 from cs336_basics.softmax import softmax
 from cs336_basics.scaled_dot_product_attention import scaled_dot_product_attention
 from cs336_basics.multihead_attention import MultiHeadSelfAttention
+from cs336_basics.transformer import TransformerBlock
 
 
 def run_linear(
@@ -155,10 +156,10 @@ def run_multihead_self_attention(
         implementation with the given QKV projection weights and input features.
     """
     mhsa = MultiHeadSelfAttention(d_model, num_heads)
-    mhsa.linear_q.weight.data = q_proj_weight
-    mhsa.linear_k.weight.data = k_proj_weight
-    mhsa.linear_v.weight.data = v_proj_weight
-    mhsa.linear_o.weight.data = o_proj_weight
+    mhsa.q_proj.weight.data = q_proj_weight
+    mhsa.k_proj.weight.data = k_proj_weight
+    mhsa.v_proj.weight.data = v_proj_weight
+    mhsa.output_proj.weight.data = o_proj_weight
     return mhsa(in_features)
 
 
@@ -300,7 +301,9 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    block = TransformerBlock(d_model, num_heads, d_ff, max_seq_len, theta)
+    block.load_state_dict(weights)
+    return block(in_features)
 
 
 def run_transformer_lm(

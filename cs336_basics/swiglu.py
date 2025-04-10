@@ -12,17 +12,24 @@ class SiLU(nn.Module):
 
 
 class SwiGLU(nn.Module):
-    def __init__(self, d_model: int, d_ff: int | None = None) -> None:
+    def __init__(
+        self,
+        d_model: int,
+        d_ff: int | None = None,
+        device: str | None = None,
+        dtype: torch.dtype | None = None
+    ) -> None:
         super(SwiGLU, self).__init__()
+        kwargs = {'device': device, 'dtype': dtype}
 
         if d_ff is None:
             d_ff = int(8 / 3 * d_model)
 
         d_ff = (d_ff // 64) * 64
 
-        self.w1: Linear = Linear(d_model, d_ff)
-        self.w2: Linear = Linear(d_ff, d_model)
-        self.w3: Linear = Linear(d_model, d_ff)
+        self.w1: Linear = Linear(d_model, d_ff, **kwargs)
+        self.w2: Linear = Linear(d_ff, d_model, **kwargs)
+        self.w3: Linear = Linear(d_model, d_ff, **kwargs)
         self.silu: SiLU = SiLU()
     
     def forward(self, x: Tensor) -> Tensor:
