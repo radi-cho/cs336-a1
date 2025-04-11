@@ -19,7 +19,7 @@ from cs336_basics.rope import RoPE
 from cs336_basics.softmax import softmax
 from cs336_basics.scaled_dot_product_attention import scaled_dot_product_attention
 from cs336_basics.multihead_attention import MultiHeadSelfAttention
-from cs336_basics.transformer import TransformerBlock
+from cs336_basics.transformer import TransformerBlock, Transformer
 
 
 def run_linear(
@@ -201,10 +201,10 @@ def run_multihead_self_attention_with_rope(
         implementation with the given QKV projection weights and input features.
     """
     mhsa = MultiHeadSelfAttention(d_model, num_heads, use_rope=True, theta=theta, max_seq_len=max_seq_len)
-    mhsa.linear_q.weight.data = q_proj_weight
-    mhsa.linear_k.weight.data = k_proj_weight
-    mhsa.linear_v.weight.data = v_proj_weight
-    mhsa.linear_o.weight.data = o_proj_weight
+    mhsa.q_proj.weight.data = q_proj_weight
+    mhsa.k_proj.weight.data = k_proj_weight
+    mhsa.v_proj.weight.data = v_proj_weight
+    mhsa.output_proj.weight.data = o_proj_weight
     return mhsa(in_features, token_positions=token_positions)
 
 
@@ -385,7 +385,9 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    transformer = Transformer(vocab_size, context_length, d_model, num_layers, num_heads, d_ff, rope_theta)
+    transformer.load_state_dict(weights)
+    return transformer(in_indices)
 
 
 def run_rmsnorm(
