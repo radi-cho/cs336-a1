@@ -12,13 +12,13 @@ class AdamW(torch.optim.Optimizer):
         betas: Tuple[float, float] = (0.9, 0.999),
         eps: float = 1e-8,
         weight_decay: float = 0.01
-    ):
+    ) -> None:
         if lr < 0:
             raise ValueError(f"Invalid learning rate: {lr}")
         defaults = {"lr": lr, "betas": betas, "eps": eps, "weight_decay": weight_decay}
         super().__init__(params, defaults)
 
-    def step(self, closure: Optional[Callable] = None):
+    def step(self, closure: Optional[Callable] = None) -> None:
         loss = None if closure is None else closure()
         for group in self.param_groups:
             lr = group["lr"]

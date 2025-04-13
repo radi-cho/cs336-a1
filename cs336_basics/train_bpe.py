@@ -164,7 +164,7 @@ def save_tokenizer(
     vocab: dict[int, bytes],
     merges: List[Tuple[bytes, bytes]],
     name: str
-):
+) -> None:
     with open(name + "_vocab.pickle", "wb") as file:
         pickle.dump(vocab, file)
 
@@ -177,6 +177,7 @@ if __name__ == "__main__":
     # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-valid.txt", 10000, ["<|endoftext|>"])
     # vocab, merges = train_bpe("../data/TinyStoriesV2-GPT4-train.txt", 10000, ["<|endoftext|>"])
     vocab, merges = train_bpe("../data/owt_train.txt", 32000, ["<|endoftext|>"])
+    # vocab, merges = train_bpe("./fixtures/sample1.txt", 257 + 8, ["<|endoftext|>"])
     # vocab, merges = train_bpe("./fixtures/sample2.txt", 257 + 8, ["<|endoftext|>"])
     save_tokenizer(vocab, merges, "tokenizer")
     # print(merges)

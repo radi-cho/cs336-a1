@@ -16,7 +16,7 @@ class MultiHeadSelfAttention(nn.Module):
         max_seq_len: int | None = None,
         device: str | None = None,
         dtype: torch.dtype | None = None
-    ):
+    ) -> None:
         super().__init__()
         kwargs = {"device": device, "dtype": dtype}
 
@@ -33,14 +33,14 @@ class MultiHeadSelfAttention(nn.Module):
         self.v_proj = Linear(self.d_v * num_heads, d_model, **kwargs)
         self.output_proj = Linear(d_model, self.d_v * num_heads, **kwargs)
 
-    def combine_head_dim(self, x: torch.Tensor):
+    def combine_head_dim(self, x: torch.Tensor) -> torch.Tensor:
         batch_size, seq_len, dim = x.shape
         i_dim = dim // self.num_heads
         x = x.view(batch_size, seq_len, self.num_heads, i_dim)
         x = torch.einsum("bshd->bhsd", x)
         return x.reshape(batch_size * self.num_heads, seq_len, -1)
 
-    def concat_heads(self, x: torch.Tensor):
+    def concat_heads(self, x: torch.Tensor) -> torch.Tensor:
         bh, seq_len, in_feature = x.size()
         batch_size = bh // self.num_heads
         i_dim = in_feature

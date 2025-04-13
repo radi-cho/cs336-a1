@@ -40,7 +40,7 @@ class Tokenizer:
         vocab: Dict[int, bytes],
         merges: List[Tuple[bytes, bytes]],
         special_tokens: Optional[List[str]] = None
-    ):
+    ) -> None:
         self.vocab = vocab
         self.reverse_lookup = {token: id for id, token in vocab.items()}
 

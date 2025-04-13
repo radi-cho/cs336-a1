@@ -2,7 +2,13 @@ import torch
 import torch.nn as nn
 
 class RoPE(nn.Module):
-    def __init__(self, theta: float, d_k: int, max_seq_len: int, device=None):
+    def __init__(
+        self,
+        theta: float,
+        d_k: int,
+        max_seq_len: int,
+        device=None
+    ) -> None:
         super().__init__()
         self.d_k = d_k
         self.max_seq_len = max_seq_len

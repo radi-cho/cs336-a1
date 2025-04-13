@@ -8,7 +8,7 @@ class Embedding(nn.Module):
         embedding_dim: int,
         device: torch.device = None,
         dtype: torch.dtype = None
-    ):
+    ) -> None:
         super().__init__()
         self.num_embeddings = num_embeddings
         self.embedding_dim = embedding_dim
