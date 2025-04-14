@@ -20,7 +20,7 @@ def evaluate(
     batch_size: int,
     context_length: int,
     device: str,
-    num_samples: int = 50
+    num_samples: int = 20
 ) -> float:
     model.eval()
     total_loss = 0
@@ -35,7 +35,11 @@ def evaluate(
 
 
 def main(args: argparse.Namespace) -> None:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    if torch.cuda.is_available():
+        device = "cuda"
     dtype = torch.float32
 
     train_data = np.memmap(args.train_data_path, dtype=np.uint16, mode="r")

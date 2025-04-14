@@ -2,6 +2,7 @@ import time
 import pickle
 from tqdm import tqdm
 from typing import Dict, List, Tuple, Optional, Iterable, Iterator
+import numpy as np
 
 from cs336_basics.constants import PAT
 
@@ -127,36 +128,44 @@ class Tokenizer:
         for id in ids:
             byte_sequence += self.vocab[id]
 
-        try:
-            return byte_sequence.decode()
-        except:
-            return byte_sequence
+        return byte_sequence.decode(errors="replace")
 
 if __name__ == "__main__":
-    with open("tokenizer_vocab.pickle", "rb") as f:
+    # with open("../archive/open_tokenizer_vocab.pickle", "rb") as f:
+    with open("../archive/tiny_tokenizer_vocab.pickle", "rb") as f:
         vocab = pickle.load(f)
 
-    with open("tokenizer_merges.pickle", "rb") as f:
+    # with open("../archive/open_tokenizer_merges.pickle", "rb") as f:
+    with open("../archive/tiny_tokenizer_merges.pickle", "rb") as f:
         merges = pickle.load(f)
 
     tokenizer = Tokenizer(vocab, merges, ["<|endoftext|>"])
 
-    total_lines = 20000
+    # total_lines = 94568885
+    total_lines = 15600057 # 157832
     byte_sum = 0
     token_count = 0
     counter = 0
 
+    token_list = []
+
     start = time.time()
-    # with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
-    with open("../data/owt_train.txt", "r") as f:
+    # with open("../data/owt_train.txt", "r") as f:
+    with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
         for byte_length, encoding in tqdm(tokenizer.encode_iterable(f), total=total_lines):
-            if counter >= total_lines:
-                break
-            byte_sum += byte_length
-            token_count += len(encoding)
+            # if counter >= total_lines:
+            #     break
+            # byte_sum += byte_length
+            # token_count += len(encoding)
+            token_list.extend(encoding)
             counter += 1
 
     end = time.time()
     print(f"Time: {end - start:.4f}s")
-    print(f"Throughput: {byte_sum / (end - start):.4f}s")
-    print(f"Compression: {byte_sum / token_count:.4f}")
+    # print(f"Throughput: {byte_sum / (end - start):.4f}s")
+    # print(f"Compression: {byte_sum / token_count:.4f}")
+    token_array = np.array(token_list, dtype=np.uint16)  # or np.uint32 depending on tokenizer vocab size
+
+    # Save to file
+    # np.save("owt_train.npy", token_array)
+    np.save("tiny_train.npy", token_array)

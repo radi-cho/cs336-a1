@@ -10,7 +10,7 @@ from cs336_basics.tokenizer import pretokenize_text
 
 
 def read_text_lines(file_path: str) -> Iterable[str]:
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         for line in file:
             yield line
 
@@ -27,7 +27,7 @@ def pretokenize(
     special_tokens: List[str] = []
 ) -> Iterable[Tuple[bytes]]:
     escaped_special_tokens = [re.escape(token) for token in special_tokens]
-    pattern = '|'.join(escaped_special_tokens)
+    pattern = "|".join(escaped_special_tokens)
 
     def process_lines():
         current_text = ""

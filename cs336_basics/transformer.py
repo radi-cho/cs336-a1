@@ -25,7 +25,7 @@ class TransformerBlock(nn.Module):
         self.attn = MultiHeadSelfAttention(d_model, num_heads, True, theta, max_seq_len, **kwargs)
         self.ln1 = RMSNorm(d_model, **kwargs)
         self.ln2 = RMSNorm(d_model, **kwargs)
-        self.ffn = SwiGLU(d_model, d_ff)
+        self.ffn = SwiGLU(d_model, d_ff, **kwargs)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = x + self.attn(self.ln1(x), token_positions=torch.arange(x.size(1)))
@@ -64,7 +64,7 @@ class Transformer(nn.Module):
             )
 
         self.ln_final = RMSNorm(d_model, **kwargs)
-        self.lm_head = Linear(d_model, vocab_size)
+        self.lm_head = Linear(d_model, vocab_size, **kwargs)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.token_embeddings(x)
