@@ -31,6 +31,8 @@ def evaluate(
         if torch.max(xb) > 9999:
             print("valid!")
             print(torch.max(xb))
+            print(val_data)
+            print(xb)
         logits = model(xb)
         loss = cross_entropy(logits, yb)
         total_loss += loss
