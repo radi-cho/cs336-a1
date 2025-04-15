@@ -28,11 +28,6 @@ def evaluate(
 
     for _ in range(num_samples):
         xb, yb = get_batch(val_data, batch_size, context_length, device)
-        if torch.max(xb) > 9999:
-            print("valid!")
-            print(torch.max(xb))
-            print(val_data)
-            print(xb)
         logits = model(xb)
         loss = cross_entropy(logits, yb)
         total_loss += loss
@@ -52,7 +47,6 @@ def main(args: argparse.Namespace) -> None:
     val_data = np.memmap(args.val_data_path, dtype=np.uint16, mode="r")
 
     wandb.init(project=args.wandb_project, config=vars(args))
-    emb = Embedding(args.vocab_size, args.d_model, device, dtype)
     model = Transformer(
         args.vocab_size,
         args.context_length,
@@ -90,9 +84,6 @@ def main(args: argparse.Namespace) -> None:
             param_group["lr"] = lr
 
         xb, yb = get_batch(train_data, args.batch_size, args.context_length, device)
-        if torch.max(xb) > 9999:
-            print("Initial")
-            print(torch.max(xb))
         logits = model(xb)
         loss = cross_entropy(logits, yb)
 

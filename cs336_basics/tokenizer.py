@@ -73,7 +73,7 @@ class Tokenizer:
             pairs = get_pairs(pretoken)
             if pairs:
                 while True:
-                    min_rank = float('inf')
+                    min_rank = float("inf")
                     best_pair = None
                     for pair in pairs:
                         rank = self.merge_ranks.get(pair)
@@ -117,8 +117,8 @@ class Tokenizer:
         iterable: Iterable[str]
     ) -> Iterator[int]:
         for text in iterable:
-            yield from self.encode(text)
-            # yield len(text.encode()), self.encode(text)
+            # yield from self.encode(text)
+            yield len(text.encode()), self.encode(text)
 
     def decode(
         self,
@@ -131,18 +131,18 @@ class Tokenizer:
         return byte_sequence.decode(errors="replace")
 
 if __name__ == "__main__":
-    # with open("../archive/open_tokenizer_vocab.pickle", "rb") as f:
-    with open("../archive/tiny_tokenizer_vocab.pickle", "rb") as f:
+    with open("../archive/open_tokenizer_vocab.pickle", "rb") as f:
+    # with open("../archive/tiny_tokenizer_vocab.pickle", "rb") as f:
         vocab = pickle.load(f)
 
-    # with open("../archive/open_tokenizer_merges.pickle", "rb") as f:
-    with open("../archive/tiny_tokenizer_merges.pickle", "rb") as f:
+    with open("../archive/open_tokenizer_merges.pickle", "rb") as f:
+    # with open("../archive/tiny_tokenizer_merges.pickle", "rb") as f:
         merges = pickle.load(f)
 
     tokenizer = Tokenizer(vocab, merges, ["<|endoftext|>"])
 
-    # total_lines = 94568885
-    total_lines = 15600057 # 157832
+    total_lines = 2301019 # 94568885
+    # total_lines = 15600057 # 157832
     byte_sum = 0
     token_count = 0
     counter = 0
@@ -150,8 +150,8 @@ if __name__ == "__main__":
     token_list = []
 
     start = time.time()
-    # with open("../data/owt_train.txt", "r") as f:
-    with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
+    with open("../data/owt_valid.txt", "r") as f:
+    # with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
         for byte_length, encoding in tqdm(tokenizer.encode_iterable(f), total=total_lines):
             # if counter >= total_lines:
             #     break
@@ -167,5 +167,5 @@ if __name__ == "__main__":
     token_array = np.array(token_list, dtype=np.uint16)  # or np.uint32 depending on tokenizer vocab size
 
     # Save to file
-    # np.save("owt_train.npy", token_array)
-    np.save("tiny_train.npy", token_array)
+    np.save("owt_valid.npy", token_array)
+    # np.save("tiny_train.npy", token_array)
