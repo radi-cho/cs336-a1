@@ -22,21 +22,14 @@ class RoPE(nn.Module):
         self.register_buffer('cos', cos, persistent=False)
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
-        try:
-            sin = self.sin[token_positions]
-            cos = self.cos[token_positions]
+        sin = self.sin[token_positions]
+        cos = self.cos[token_positions]
 
-            x1 = x[..., ::2]
-            x2 = x[..., 1::2]
+        x1 = x[..., ::2]
+        x2 = x[..., 1::2]
 
-            x_rotated_even = x1 * cos - x2 * sin
-            x_rotated_odd = x1 * sin + x2 * cos
+        x_rotated_even = x1 * cos - x2 * sin
+        x_rotated_odd = x1 * sin + x2 * cos
 
-            x_rotated = torch.stack((x_rotated_even, x_rotated_odd), dim=-1).flatten(-2)
-            return x_rotated
-
-        except:
-            print(self.sin.shape)
-            print(token_positions)
-            print(torch.max(token_positions))
-            raise
+        x_rotated = torch.stack((x_rotated_even, x_rotated_odd), dim=-1).flatten(-2)
+        return x_rotated
