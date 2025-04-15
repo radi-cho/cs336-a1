@@ -37,4 +37,6 @@ class RoPE(nn.Module):
 
         except:
             print(self.sin.shape)
-            print(token_positions.shape)
+            print(token_positions)
+            print(torch.max(token_positions))
+            raise
