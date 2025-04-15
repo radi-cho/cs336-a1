@@ -28,6 +28,9 @@ def evaluate(
 
     for _ in range(num_samples):
         xb, yb = get_batch(val_data, batch_size, context_length, device)
+        if torch.max(xb) > 9999:
+            print("valid!")
+            print(torch.max(xb))
         logits = model(xb)
         loss = cross_entropy(logits, yb)
         total_loss += loss
