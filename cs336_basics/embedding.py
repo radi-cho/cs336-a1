@@ -18,9 +18,4 @@ class Embedding(nn.Module):
         torch.nn.init.trunc_normal_(self.weight, 0.0, 1, -3, 3)
 
     def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
-        try:
-            return self.weight[token_ids]
-        except:
-            print(token_ids.shape)
-            print(torch.max(token_ids))
-            raise
+        return self.weight[token_ids]

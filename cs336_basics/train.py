@@ -83,6 +83,7 @@ def main(args: argparse.Namespace) -> None:
             param_group["lr"] = lr
 
         xb, yb = get_batch(train_data, args.batch_size, args.context_length, device)
+        print(torch.max(xb))
         logits = model(xb)
         loss = cross_entropy(logits, yb)
 
