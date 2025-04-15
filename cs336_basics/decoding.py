@@ -12,8 +12,7 @@ def top_p_sample(logits: torch.Tensor, p: float) -> int:
     cutoff = torch.cumsum(probs, dim=-1) > p
     if torch.any(cutoff):
         last_included = torch.argmax(cutoff).item()
-        logits = logits[:last_included + 1]
-        ind = ind[:last_included + 1]
+        logits, ind = logits[:last_included + 1], ind[:last_included + 1]
         probs = softmax(logits, dim=-1)
 
     return ind[torch.multinomial(probs, num_samples=1)].item()
@@ -22,7 +21,7 @@ def top_p_sample(logits: torch.Tensor, p: float) -> int:
 @torch.no_grad()
 def decode(
     generator,
-    prompt: list[int],
+    inp_seq: list[int],
     max_tokens: int = 128,
     temperature: float = 1.0,
     top_p: float = 0.9,
@@ -30,7 +29,7 @@ def decode(
     device: str = "cuda" if torch.cuda.is_available() else "cpu",
     **kwargs
 ) -> list[int]:
-    seq = list(prompt)
+    seq = list(inp_seq)
     for _ in range(max_tokens):
         input_tensor = torch.tensor([seq], dtype=torch.long, device=device)
 
