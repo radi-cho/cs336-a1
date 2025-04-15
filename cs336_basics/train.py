@@ -20,7 +20,7 @@ def evaluate(
     batch_size: int,
     context_length: int,
     device: str,
-    num_samples: int = 20
+    num_samples: int = 100
 ) -> float:
     model.eval()
     total_loss = 0
