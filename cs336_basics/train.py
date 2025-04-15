@@ -48,74 +48,75 @@ def main(args: argparse.Namespace) -> None:
 
     wandb.init(project=args.wandb_project, config=vars(args))
     emb = Embedding(args.vocab_size, args.d_model, device, dtype)
-    # model = Transformer(
-    #     args.vocab_size,
-    #     args.context_length,
-    #     args.d_model,
-    #     args.num_layers,
-    #     args.num_heads,
-    #     args.d_ff,
-    #     args.rope_theta,
-    #     device,
-    #     dtype
-    # )
+    model = Transformer(
+        args.vocab_size,
+        args.context_length,
+        args.d_model,
+        args.num_layers,
+        args.num_heads,
+        args.d_ff,
+        args.rope_theta,
+        device,
+        dtype
+    )
 
-    # optimizer = AdamW(
-    #     model.parameters(),
-    #     args.max_lr,
-    #     (args.beta0, args.beta1),
-    #     1e-8,
-    #     args.decay
-    # )
+    optimizer = AdamW(
+        model.parameters(),
+        args.max_lr,
+        (args.beta0, args.beta1),
+        1e-8,
+        args.decay
+    )
 
     iteration = 0
-    # if args.resume and os.path.exists(args.resume):
-    #     iteration = load_checkpoint(args.resume, model, optimizer)
+    if args.resume and os.path.exists(args.resume):
+        iteration = load_checkpoint(args.resume, model, optimizer)
 
     while iteration < args.max_iters:
-    #     lr = learning_rate_schedule(
-    #         iteration,
-    #         args.max_lr,
-    #         args.min_lr,
-    #         args.warmup_iters,
-    #         args.cosine_iters
-    #     )
+        lr = learning_rate_schedule(
+            iteration,
+            args.max_lr,
+            args.min_lr,
+            args.warmup_iters,
+            args.cosine_iters
+        )
 
-    #     for param_group in optimizer.param_groups:
-    #         param_group["lr"] = lr
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = lr
 
         xb, yb = get_batch(train_data, args.batch_size, args.context_length, device)
-        emb(xb)
-    #     logits = model(xb)
-    #     loss = cross_entropy(logits, yb)
+        if torch.max(xb) > 9999:
+            print("Initial")
+            print(torch.max(xb))
+        logits = model(xb)
+        loss = cross_entropy(logits, yb)
 
-    #     optimizer.zero_grad()
-    #     loss.backward()
-    #     gradient_clipping(model.parameters(), args.grad_clip)
-    #     optimizer.step()
+        optimizer.zero_grad()
+        loss.backward()
+        gradient_clipping(model.parameters(), args.grad_clip)
+        optimizer.step()
 
         if iteration % args.log_interval == 0:
-            print(f"Iter {iteration}")
-    #         model.eval()
-    #         val_loss = evaluate(model, val_data, args.batch_size, args.context_length, device)
-    #         model.train()
+            model.eval()
+            val_loss = evaluate(model, val_data, args.batch_size, args.context_length, device)
+            model.train()
 
-    #         wandb.log({
-    #             "train_loss": loss.item(),
-    #             "val_loss": val_loss.item(),
-    #             "lr": lr,
-    #             "iter": iteration
-    #         })
+            wandb.log({
+                "train_loss": loss.item(),
+                "val_loss": val_loss.item(),
+                "lr": lr,
+                "iter": iteration
+            })
 
-    #        print(f"Iter {iteration}: Train loss {loss.item():.4f}, Val loss {val_loss.item():.4f}")
+            print(f"Iter {iteration}: Train loss {loss.item():.4f}, Val loss {val_loss.item():.4f}")
 
-    #     if iteration % args.ckpt_interval == 0 and args.ckpt_path:
-    #         save_checkpoint(model, optimizer, iteration, args.ckpt_path)
+        if iteration % args.ckpt_interval == 0 and args.ckpt_path:
+            save_checkpoint(model, optimizer, iteration, args.ckpt_path)
 
         iteration += 1
 
-    # if args.ckpt_path:
-    #     save_checkpoint(model, optimizer, iteration, args.ckpt_path)
+    if args.ckpt_path:
+        save_checkpoint(model, optimizer, iteration, args.ckpt_path)
 
 
 if __name__ == "__main__":
