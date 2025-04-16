@@ -16,7 +16,7 @@ def top_p_sample(logits: torch.Tensor, p: float) -> int:
 
     cutoff = torch.cumsum(probs, dim=-1) > p
     if torch.any(cutoff):
-        last_included = torch.argmax(cutoff).item()
+        last_included = torch.nonzero(cutoff, as_tuple=False)[0].item()
         logits, ind = logits[:last_included + 1], ind[:last_included + 1]
         probs = softmax(logits, dim=-1)
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     model = Transformer(10000, 256, 512, 4, 16, 1344, 10000, "cuda")
     # model = Transformer(10000, 256, 512, 4, 16, 1344, 10000, "cuda")
-    load_checkpoint("checkpoint.pt", model)
+    load_checkpoint("checkpoint_lr1e-3.pt", model)
     inp = tokenizer.encode("Once ")
     out = decode(model, inp, max_tokens=256, device="cuda")
 
