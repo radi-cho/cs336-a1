@@ -1,6 +1,8 @@
 import torch
-from cs336_basics import softmax
 
+from cs336_basics.softmax import softmax
+from cs336_basics.checkpointing import load_checkpoint
+from cs336_basics.transformer import Transformer
 
 END_OF_TEXT_TOKEN = 256
 
@@ -44,3 +46,8 @@ def decode(
             break
 
     return seq
+
+
+if __name__ == "__main__":
+    model = Transformer(32000, 512, )
+    load_checkpoint(args.resume, model, optimizer)

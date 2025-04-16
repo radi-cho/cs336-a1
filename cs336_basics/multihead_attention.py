@@ -48,7 +48,11 @@ class MultiHeadSelfAttention(nn.Module):
         x = torch.einsum("bhsd->bshd", x.contiguous())
         return x.reshape(batch_size, seq_len, i_dim * self.num_heads)
 
-    def forward(self, x: torch.Tensor, token_positions: torch.Tensor = None) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        token_positions: torch.Tensor = None
+    ) -> torch.Tensor:
         Q = self.combine_head_dim(self.q_proj(x))
         K = self.combine_head_dim(self.k_proj(x))
         if self.use_rope:

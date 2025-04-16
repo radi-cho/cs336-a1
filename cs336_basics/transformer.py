@@ -27,8 +27,14 @@ class TransformerBlock(nn.Module):
         self.ln2 = RMSNorm(d_model, **kwargs)
         self.ffn = SwiGLU(d_model, d_ff, **kwargs)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = x + self.attn(self.ln1(x), token_positions=torch.arange(x.size(1)))
+    def forward(
+        self,
+        x: torch.Tensor,
+        token_positions: torch.Tensor = None
+    ) -> torch.Tensor:
+        if token_positions == None:
+            token_positions = torch.arange(x.size(1))
+        y = x + self.attn(self.ln1(x), token_positions)
         z = y + self.ffn(self.ln2(y))
         return z
 
