@@ -1,5 +1,6 @@
 import math
 
+
 def learning_rate_schedule(
     t: int,
     lr_max: float,

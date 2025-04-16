@@ -65,7 +65,9 @@ class Transformer(nn.Module):
 
         self.ln_final = RMSNorm(d_model, **kwargs)
         self.lm_head = Linear(d_model, vocab_size, **kwargs)
-        self.token_embeddings.weight = self.lm_head.weight
+
+        # TIE WEIGHTS:
+        # self.token_embeddings.weight = self.lm_head.weight
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.token_embeddings(x)

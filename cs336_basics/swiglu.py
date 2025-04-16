@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from cs336_basics.linear import Linear
 
+
 class SiLU(nn.Module):
     def __init__(self) -> None:
         super(SiLU, self).__init__()

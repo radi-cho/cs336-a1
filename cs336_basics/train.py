@@ -3,11 +3,11 @@ import argparse
 import numpy as np
 import torch
 import wandb
+import torch.nn as nn
 
 from cs336_basics.data_loading import get_batch
 from cs336_basics.checkpointing import save_checkpoint, load_checkpoint
 from cs336_basics.transformer import Transformer
-from cs336_basics.embedding import Embedding
 from cs336_basics.crossentropy import cross_entropy
 from cs336_basics.gradient_clipping import gradient_clipping
 from cs336_basics.adamw import AdamW
@@ -16,7 +16,7 @@ from cs336_basics.lr_schedule import learning_rate_schedule
 
 @torch.no_grad()
 def evaluate(
-    model: torch.nn.Module,
+    model: nn.Module,
     val_data: torch.Tensor,
     batch_size: int,
     context_length: int,

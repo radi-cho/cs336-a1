@@ -117,8 +117,8 @@ class Tokenizer:
         iterable: Iterable[str]
     ) -> Iterator[int]:
         for text in iterable:
-            # yield from self.encode(text)
-            yield len(text.encode()), self.encode(text)
+            yield from self.encode(text)
+            # yield len(text.encode()), self.encode(text)
 
     def decode(
         self,
@@ -141,8 +141,7 @@ if __name__ == "__main__":
 
     tokenizer = Tokenizer(vocab, merges, ["<|endoftext|>"])
 
-    total_lines = 2301019 # 94568885
-    # total_lines = 15600057 # 157832
+    total_lines = 2301019 # 94568885 15600057 157832
     byte_sum = 0
     token_count = 0
     counter = 0
@@ -153,19 +152,17 @@ if __name__ == "__main__":
     with open("../data/owt_valid.txt", "r") as f:
     # with open("../data/TinyStoriesV2-GPT4-train.txt", "r") as f:
         for byte_length, encoding in tqdm(tokenizer.encode_iterable(f), total=total_lines):
-            # if counter >= total_lines:
-            #     break
-            # byte_sum += byte_length
-            # token_count += len(encoding)
+            byte_sum += byte_length
+            token_count += len(encoding)
             token_list.extend(encoding)
             counter += 1
 
     end = time.time()
     print(f"Time: {end - start:.4f}s")
-    # print(f"Throughput: {byte_sum / (end - start):.4f}s")
-    # print(f"Compression: {byte_sum / token_count:.4f}")
-    token_array = np.array(token_list, dtype=np.uint16)  # or np.uint32 depending on tokenizer vocab size
+    print(f"Throughput: {byte_sum / (end - start):.4f}s")
+    print(f"Compression: {byte_sum / token_count:.4f}")
 
-    # Save to file
-    np.save("owt_valid.npy", token_array)
+    token_array = np.array(token_list, dtype=np.uint16)
+    # np.save("owt_valid.npy", token_array)
     # np.save("tiny_train.npy", token_array)
+    token_array.tofile("owt_valid.bin")

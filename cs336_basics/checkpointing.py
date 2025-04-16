@@ -1,10 +1,11 @@
 import os
 import torch
 from typing import BinaryIO, IO
+import torch.nn as nn
 
 
 def save_checkpoint(
-    model: torch.nn.Module,
+    model: nn.Module,
     optimizer: torch.optim.Optimizer,
     iteration: int,
     out: str | os.PathLike | BinaryIO | IO[bytes]
@@ -20,7 +21,7 @@ def save_checkpoint(
 
 def load_checkpoint(
     src: str | os.PathLike | BinaryIO | IO[bytes],
-    model: torch.nn.Module,
+    model: nn.Module,
     optimizer: torch.optim.Optimizer,
 ) -> int:
     obj = torch.load(src)

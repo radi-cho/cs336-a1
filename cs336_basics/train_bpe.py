@@ -127,8 +127,6 @@ def train_bpe(
         vocab[len(vocab)] = bytes([b])
     vocab.update({(256 + i): item.encode() for i, item in enumerate(special_tokens)})
 
-    # with open("wip.pickle", "rb") as f:
-    #     frequency_table, pair_frequencies, pair_sequences = pickle.load(f)
     text_lines = read_text_lines(input_path)
     pretokenized_sequence = pretokenize(text_lines, special_tokens=special_tokens)
     frequency_table = dict(Counter(pretokenized_sequence))
@@ -140,7 +138,6 @@ def train_bpe(
 
     print("Building index")
     pair_frequencies, pair_sequences = get_index(frequency_table)
-    pickle.dump((frequency_table, pair_frequencies, pair_sequences), open("wip.pickle", "wb"))
     print("Training")
 
     progress = tqdm(total=vocab_size - len(vocab))
