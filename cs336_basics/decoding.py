@@ -1,8 +1,11 @@
 import torch
+import pickle
+from tqdm import tqdm
 
 from cs336_basics.softmax import softmax
 from cs336_basics.checkpointing import load_checkpoint
 from cs336_basics.transformer import Transformer
+from cs336_basics.tokenizer import Tokenizer
 
 END_OF_TEXT_TOKEN = 256
 
@@ -28,14 +31,13 @@ def decode(
     temperature: float = 1.0,
     top_p: float = 0.9,
     eos_token_id: int = END_OF_TEXT_TOKEN,
-    device: str = "cuda" if torch.cuda.is_available() else "cpu",
-    **kwargs
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
 ) -> list[int]:
     seq = list(inp_seq)
-    for _ in range(max_tokens):
+    for _ in tqdm(range(max_tokens)):
         input_tensor = torch.tensor([seq], dtype=torch.long, device=device)
 
-        logits = generator(in_indices=input_tensor, **kwargs)
+        logits = generator(input_tensor)
         logits = logits[0, -1, :]
         logits = logits / temperature
 
@@ -49,5 +51,20 @@ def decode(
 
 
 if __name__ == "__main__":
-    model = Transformer(32000, 512, )
-    load_checkpoint(args.resume, model, optimizer)
+    # with open("../archive/open_tokenizer_vocab.pickle", "rb") as f:
+    with open("../archive/tiny_tokenizer_vocab.pickle", "rb") as f:
+        vocab = pickle.load(f)
+
+    # with open("../archive/open_tokenizer_merges.pickle", "rb") as f:
+    with open("../archive/tiny_tokenizer_merges.pickle", "rb") as f:
+        merges = pickle.load(f)
+
+    tokenizer = Tokenizer(vocab, merges, ["<|endoftext|>"])
+
+    model = Transformer(10000, 256, 512, 4, 16, 1344, 10000, "cuda")
+    # model = Transformer(10000, 256, 512, 4, 16, 1344, 10000, "cuda")
+    load_checkpoint("checkpoint.pt", model)
+    inp = tokenizer.encode("Once ")
+    out = decode(model, inp, max_tokens=256, device="cuda")
+
+    print(tokenizer.decode(out))
