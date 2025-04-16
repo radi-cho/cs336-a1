@@ -50,7 +50,8 @@ uv run train.py \
   --wandb_project "transformer-tuning"
 
 # BATCH ABLATION
-# Tried batch_size 1, 16, 64, 128, TODO
+# Tried batch_size 1, 16, 64, 128, 512
+# Biggest batch size: 512
 
 uv run train.py \
   --train_data_path ../archive/tiny_train.bin \
